@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Histórica España</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            
+            /* --- TU IMAGEN DE FONDO --- */
+            /* El código intentará cargar fondo.jpg, si no, prueba fondo.png */
+            /* Si no encuentra ninguna, mostrará un gris elegante */
+            background-color: #34495e;
+            background-image: 
+                linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.7)),
+                url('fondo.jpg'), 
+                url('fondo.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        .tarjeta {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 2.5rem;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 420px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        h1 { margin: 0; color: #1a252f; font-size: 1.8rem; }
+        p.subtitulo { color: #7f8c8d; margin-bottom: 2rem; font-size: 0.9rem; margin-top: 0.5rem; }
+
+        .campo { text-align: left; margin-bottom: 1.5rem; }
+        
+        label { 
+            display: block; 
+            margin-bottom: 0.5rem; 
+            color: #2c3e50; 
+            font-weight: bold; 
+            font-size: 0.8rem; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid #bdc3c7;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            background: #fff;
+            box-sizing: border-box; /* Importante para que no se salga */
+        }
+
+        button {
+            width: 100%;
+            padding: 1.2rem;
+            background-color: #27ae60; /* Verde */
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        button:hover { background-color: #219150; transform: translateY(-2px); }
+
+        #resultado {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #ecf0f1;
+            display: none; /* Se oculta hasta calcular */
+        }
+
+        .cifra-gigante {
+            display: block;
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #27ae60;
+            margin: 0.5rem 0;
+        }
+        
+        .texto-peque { font-size: 0.85rem; color: #95a5a6; }
+    </style>
+</head>
+<body>
+
+<div class="tarjeta">
+    <h1>Calculadora IPC 🇪🇸</h1>
+    <p class="subtitulo">Actualiza pesetas y euros al valor de 2024</p>
+
+    <div class="campo">
+        <label>Precio Original</label>
+        <input type="number" id="inputPrecio" placeholder="Ej: 1000">
+    </div>
+
+    <div class="campo">
+        <label>Año</label>
+        <select id="selectAnio"></select>
+    </div>
+
+    <button onclick="calcular()">Calcular Valor Actual</button>
+
+    <div id="resultado"></div>
+</div>
+
+<script>
+    // 1. DATOS OFICIALES (INE Base 2021)
+    const datosIPC = {
+        1960:2.502, 1961:2.522, 1962:2.665, 1963:2.900, 1964:3.099, 1965:3.511,
+        1966:3.731, 1967:3.970, 1968:4.160, 1969:4.264, 1970:4.550, 1971:4.923,
+        1972:5.332, 1973:5.940, 1974:6.872, 1975:8.033, 1976:9.447, 1977:11.752,
+        1978:14.079, 1979:16.290, 1980:18.828, 1981:21.573, 1982:24.680, 1983:27.691,
+        1984:30.820, 1985:33.532, 1986:36.483, 1987:38.393, 1988:40.247, 1989:42.996,
+        1990:45.865, 1991:48.586, 1992:51.453, 1993:53.820, 1994:56.363, 1995:59.006,
+        1996:61.107, 1997:62.317, 1998:63.457, 1999:64.935, 2000:67.169, 2001:68.962,
+        2002:71.438, 2003:73.610, 2004:75.848, 2005:78.419, 2006:81.179, 2007:83.460,
+        2008:86.882, 2009:86.630, 2010:88.189, 2011:91.011, 2012:93.241, 2013:94.556,
+        2014:94.414, 2015:93.942, 2016:93.754, 2017:95.629, 2018:97.235, 2019:97.916,
+        2020:97.603, 2021:100.628, 2022:109.080, 2023:112.952, 2024:116.567
+    };
+
+    // 2. RELLENAR SELECTOR DE AÑOS
+    const selector = document.getElementById('selectAnio');
+    
+    // Bucle simple para crear los años
+    for (let anio = 1960; anio <= 2024; anio++) {
+        let opcion = document.createElement('option');
+        opcion.value = anio;
+        opcion.textContent = anio;
+        if (anio === 1990) opcion.selected = true; // Selecciona 1990 por defecto
+        selector.appendChild(opcion);
+    }
+
+    // 3. FUNCIÓN DE CÁLCULO
+    function calcular() {
+        const input = document.getElementById('inputPrecio');
+        const resultadoDiv = document.getElementById('resultado');
+        
+        // Obtener valores
+        let precio = parseFloat(input.value);
+        let anio = parseInt(selector.value);
+
+        if (!precio) {
+            alert("Por favor, introduce un precio numérico.");
+            return;
+        }
+
+        // Datos para la fórmula
+        let ipcHoy = datosIPC[2024];
+        let ipcAnio = datosIPC[anio];
+
+        // Fórmula de inflación
+        let valorAjustado = precio * (ipcHoy / ipcAnio);
+        
+        // Convertir Pesetas a Euros si es necesario
+        let valorFinal = valorAjustado;
+        let nombreMoneda = "Euros";
+
+        if (anio < 2002) {
+            valorFinal = valorAjustado / 166.386;
+            nombreMoneda = "Pesetas";
+        }
+
+        // Mostrar resultado
+        resultadoDiv.style.display = "block";
+        resultadoDiv.innerHTML = `
+            <div class="texto-peque">${precio.toLocaleString('es-ES')} ${nombreMoneda} de ${anio} equivalen hoy a:</div>
+            <span class="cifra-gigante">${valorFinal.toLocaleString('es-ES', {style: 'currency', currency: 'EUR'})}</span>
+            <div class="texto-peque">teniendo en cuenta la inflación acumulada.</div>
+        `;
+    }
+</script>
+
+</body>
+</html>
